@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xsi:type="TaskPaneApp">
+  <Id>a776297a-801b-4818-a57e-0ce34a237d50</Id>
+  <Version>0.1.0.0</Version>
+  <ProviderName>Local LLM</ProviderName>
+  <DefaultLocale>ja-JP</DefaultLocale>
+  <DisplayName DefaultValue="Excel Local LLM" />
+  <Description DefaultValue="選択範囲をローカルLLMで処理してサイドバーに表示します" />
+  <IconUrl DefaultValue="http://localhost:3000/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="http://localhost:3000/assets/icon-80.png" />
+  <SupportUrl DefaultValue="http://localhost:3000/" />
+  <AppDomains>
+    <AppDomain>http://127.0.0.1:8787</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Workbook" />
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="http://localhost:3000/taskpane.html" />
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+</OfficeApp>

@@ -1,0 +1,13 @@
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+
+# Installer build artifacts and logs
+installer/build/
+installer/dist/
+installer/logs/
+installer/assets/
+*.lnk
+*.RPT
+*.DDF
