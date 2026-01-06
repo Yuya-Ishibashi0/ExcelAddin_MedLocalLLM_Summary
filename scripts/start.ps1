@@ -1,9 +1,32 @@
+param(
+    [switch]$Restart
+)
+
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Split-Path -Parent $scriptRoot
 $appRoot = Join-Path $repoRoot "app"
 $addInRoot = Join-Path $repoRoot "add-in"
 
-$pythonProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" -ErrorAction SilentlyContinue)
+$pythonProcesses = @(Get-CimInstance Win32_Process -Filter "Name LIKE 'python%.exe'" -ErrorAction SilentlyContinue)
+
+if ($Restart) {
+    $uvicornTargets = $pythonProcesses | Where-Object {
+        $_.CommandLine -and $_.CommandLine -like "*uvicorn*server:app*" -and $_.CommandLine -like "*--port 8787*"
+    }
+    foreach ($proc in $uvicornTargets) {
+        Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+
+    $httpTargets = $pythonProcesses | Where-Object {
+        $_.CommandLine -and ($_.CommandLine -like "*-m http.server 3000*" -or $_.CommandLine -like "*http.server 3000*")
+    }
+    foreach ($proc in $httpTargets) {
+        Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+
+    Start-Sleep -Seconds 1
+    $pythonProcesses = @(Get-CimInstance Win32_Process -Filter "Name LIKE 'python%.exe'" -ErrorAction SilentlyContinue)
+}
 
 $ollamaRunning = Get-Process -Name "ollama" -ErrorAction SilentlyContinue
 if (-not $ollamaRunning) {

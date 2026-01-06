@@ -46,7 +46,8 @@ python -m http.server 3000
 
 主なキー:
 
-- `ollama_url` / `ollama_model` / `system_prompt`
+- `ollama_url` / `ollama_model` / `system_prompt` / `inference_prompt`
+- `inference_num_predict` / `inference_num_ctx`
 - `num_predict` / `num_ctx` / `num_thread` / `num_batch`
 - `temperature` / `top_k` / `top_p`
 - `repeat_penalty` / `repeat_last_n`
@@ -70,10 +71,10 @@ python -m http.server 3000
 3. 履歴要約のON/OFF → `add-in/taskpane.js` の先頭定数を編集
 4. プリセット内容変更 → `app/server.py` の `get_preset_options` を編集
 
-## Excel起動トリガー（自動起動）
+## 自動起動（ログオン時）
 
-`scripts/excel-watch.ps1` をタスクスケジューラの「ログオン時」に登録すると、
-Excel起動を検知して `scripts/start.ps1` を自動実行できます。
+`scripts/start.ps1` をタスクスケジューラの「ログオン時」に登録すると、自動起動できます。
+Excel起動に合わせたい場合は `scripts/excel-watch.ps1` を使います。
 
 ## 配布（オンライン/オフライン）
 

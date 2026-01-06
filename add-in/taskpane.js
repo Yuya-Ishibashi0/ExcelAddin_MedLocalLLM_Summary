@@ -3,17 +3,10 @@
   const API_URL = "http://127.0.0.1:8787/chat";
   const STREAM_URL = "http://127.0.0.1:8787/chat/stream";
   const TIMEOUT_MS = 120000;
-  const ENABLE_HISTORY_SUMMARY = true;
-  const SUMMARY_TRIGGER_MESSAGES = 8;
-  const SUMMARY_KEEP_MESSAGES = 2;
-  const SUMMARY_MAX_TOKENS = 128;
-  const SUMMARY_PROMPT =
-    "以下は過去の会話ログです。重要な事実/決定事項/前提/制約を日本語で簡潔に要約してください。箇条書き5件以内。";
 
   let lastAnswer = "";
   let isBusy = false;
   let selectionContext = "";
-  let messages = [];
 
   const sendBtn = document.getElementById("send-btn");
   const writeBtn = document.getElementById("write-btn");
@@ -23,7 +16,7 @@
   const contextBtn = document.getElementById("context-btn");
   const contextToggle = document.getElementById("context-toggle");
   const contextStatusEl = document.getElementById("context-status");
-  const presetSelect = document.getElementById("preset-select");
+  const inferenceToggle = document.getElementById("inference-toggle");
 
   class ApiError extends Error {
     constructor(status, message) {
@@ -51,9 +44,8 @@
     statusEl.parentElement.classList.toggle("error", type === "error");
   }
 
-  function getSelectedPreset() {
-    if (!presetSelect) return "";
-    return presetSelect.value || "";
+  function isInferenceModeEnabled() {
+    return Boolean(inferenceToggle && inferenceToggle.checked);
   }
 
   function valuesToTSV(values) {
@@ -121,61 +113,6 @@
       throw err;
     } finally {
       clearTimeout(timeoutId);
-    }
-  }
-
-  async function summarizeHistory(historyMessages) {
-    const text = historyMessages
-      .filter((message) => message.role !== "system")
-      .map((message) => {
-        const label = message.role === "user" ? "ユーザー" : "アシスタント";
-        return `${label}: ${message.content}`;
-      })
-      .join("\n");
-    if (!text.trim()) {
-      return "";
-    }
-
-    const payload = {
-      messages: [
-        {
-          role: "user",
-          content: `${SUMMARY_PROMPT}\n\n${text}`,
-        },
-      ],
-      selection_context: "",
-      model: null,
-      max_tokens: SUMMARY_MAX_TOKENS,
-      preset: getSelectedPreset() || null,
-    };
-
-    return await callLocalApi(payload);
-  }
-
-  async function maybeSummarizeHistory() {
-    if (!ENABLE_HISTORY_SUMMARY) return;
-    if (messages.length <= SUMMARY_TRIGGER_MESSAGES) return;
-
-    const keepMessages = Math.max(1, SUMMARY_KEEP_MESSAGES);
-    const cutoffIndex = Math.max(0, messages.length - keepMessages);
-    const history = messages.slice(0, cutoffIndex);
-    if (history.length === 0) return;
-
-    try {
-      setStatus("履歴要約中…");
-      const summary = (await summarizeHistory(history)).trim();
-      if (!summary) return;
-
-      const tail = messages.slice(cutoffIndex);
-      messages = [
-        {
-          role: "system",
-          content: `これまでの会話要約:\n${summary}`,
-        },
-        ...tail,
-      ];
-    } catch (err) {
-      setStatus("要約に失敗しました。履歴のまま送信します。", "error");
     }
   }
 
@@ -290,7 +227,6 @@
       return;
     }
 
-    messages.push({ role: "user", content: text });
     appendMessage("user", text);
     inputEl.value = "";
 
@@ -298,14 +234,13 @@
     setStatus("準備中…");
 
     try {
-      await maybeSummarizeHistory();
       setStatus("生成中…");
       const payload = {
-        messages,
+        messages: [{ role: "user", content: text }],
         selection_context: contextToggle.checked ? selectionContext : "",
         model: null,
         max_tokens: null,
-        preset: getSelectedPreset() || null,
+        inference_mode: isInferenceModeEnabled(),
       };
 
       const { contentEl } = appendMessage("assistant", "");
@@ -320,8 +255,6 @@
       if (!answer) {
         contentEl.textContent = "(結果が空です)";
       }
-
-      messages.push({ role: "assistant", content: answer || "" });
 
       lastAnswer = answer;
       writeBtn.disabled = !lastAnswer;

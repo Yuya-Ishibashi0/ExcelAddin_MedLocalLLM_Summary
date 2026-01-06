@@ -26,14 +26,11 @@
         <div class="context-meta">
           <span id="context-status">未設定 / 送信ON</span>
         </div>
-        <div class="preset-row">
-          <label for="preset-select">プリセット</label>
-          <select id="preset-select">
-            <option value="">デフォルト</option>
-            <option value="fast">fast（速度重視）</option>
-            <option value="balanced">balanced（標準）</option>
-            <option value="long">long（文脈重視）</option>
-          </select>
+        <div class="mode-row">
+          <label class="toggle">
+            <input type="checkbox" id="inference-toggle" />
+            推論モード
+          </label>
         </div>
       </section>
 

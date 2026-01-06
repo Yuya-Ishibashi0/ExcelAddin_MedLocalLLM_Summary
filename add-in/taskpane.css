@@ -129,26 +129,12 @@ button:disabled {
   color: var(--muted);
 }
 
-.preset-row {
+.mode-row {
   margin-top: 10px;
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.preset-row label {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-select {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 12px;
-  background: #fff;
-  color: var(--text);
 }
 
 .chat label,

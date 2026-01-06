@@ -32,6 +32,8 @@ OLLAMA_PRESET = (os.getenv("OLLAMA_PRESET") or SETTINGS.get("preset") or "").str
 OLLAMA_NUM_PREDICT_DEFAULT = int(SETTINGS.get("num_predict_default", 512))
 OLLAMA_NUM_PREDICT_RAW = os.getenv("OLLAMA_NUM_PREDICT") or SETTINGS.get("num_predict")
 OLLAMA_NUM_CTX_RAW = os.getenv("OLLAMA_NUM_CTX") or SETTINGS.get("num_ctx")
+INFERENCE_NUM_PREDICT_RAW = os.getenv("INFERENCE_NUM_PREDICT") or SETTINGS.get("inference_num_predict")
+INFERENCE_NUM_CTX_RAW = os.getenv("INFERENCE_NUM_CTX") or SETTINGS.get("inference_num_ctx")
 OLLAMA_NUM_THREAD_RAW = os.getenv("OLLAMA_NUM_THREAD") or SETTINGS.get("num_thread")
 OLLAMA_NUM_BATCH_RAW = os.getenv("OLLAMA_NUM_BATCH") or SETTINGS.get("num_batch")
 OLLAMA_TEMPERATURE_RAW = os.getenv("OLLAMA_TEMPERATURE") or SETTINGS.get("temperature")
@@ -51,7 +53,11 @@ OLLAMA_SEED_RAW = os.getenv("OLLAMA_SEED") or SETTINGS.get("seed")
 OLLAMA_STOP_RAW = os.getenv("OLLAMA_STOP") or SETTINGS.get("stop")
 SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT") or SETTINGS.get(
     "system_prompt",
-    "回答は短く完結。長くなる場合は重要点のみ箇条書き3件以内。続きを書かない。",
+    "日本語で簡潔に回答する。事実と推測を混同しない。未記載は「記載なし」。出力形式が指定されている場合は厳守する。",
+)
+INFERENCE_PROMPT = os.getenv("INFERENCE_PROMPT") or SETTINGS.get(
+    "inference_prompt",
+    "推論モード: 出力形式と制約を厳守し、重要情報の漏れを防ぐ。曖昧・不足・矛盾があれば明示する。思考過程は書かず、結論のみ出力する。",
 )
 
 
@@ -66,6 +72,7 @@ class ChatRequest(BaseModel):
     model: str | None = None
     max_tokens: int | None = None
     preset: str | None = None
+    inference_mode: bool | None = None
 
 
 class ChatResponse(BaseModel):
@@ -164,6 +171,8 @@ def build_payload(req: ChatRequest, stream: bool) -> tuple[dict[str, Any], str]:
                 "content": f"選択範囲コンテキスト:\\n{req.selection_context}",
             }
         )
+    if req.inference_mode and INFERENCE_PROMPT:
+        messages.append({"role": "system", "content": INFERENCE_PROMPT})
 
     for message in req.messages:
         if hasattr(message, "model_dump"):
@@ -183,6 +192,14 @@ def build_payload(req: ChatRequest, stream: bool) -> tuple[dict[str, Any], str]:
     num_ctx = parse_optional_int(OLLAMA_NUM_CTX_RAW)
     if num_ctx is None and preset:
         num_ctx = preset.get("num_ctx")
+
+    if req.inference_mode:
+        inference_num_predict = parse_optional_int(INFERENCE_NUM_PREDICT_RAW)
+        if inference_num_predict is not None:
+            num_predict = inference_num_predict
+        inference_num_ctx = parse_optional_int(INFERENCE_NUM_CTX_RAW)
+        if inference_num_ctx is not None:
+            num_ctx = inference_num_ctx
     num_thread = parse_optional_int(OLLAMA_NUM_THREAD_RAW)
     num_batch = parse_optional_int(OLLAMA_NUM_BATCH_RAW)
     options: dict[str, Any] = {}

@@ -19,7 +19,7 @@ $manifestDest = Join-Path $manifestDir "ExcelLocalLLM.xml"
 $shareName = "OfficeAddinManifests"
 $catalogId = "{B5E7B94E-51B3-4F97-A2E8-2DF8D3B3D9F3}"
 $catalogKey = "HKCU:\\Software\\Microsoft\\Office\\16.0\\WEF\\TrustedCatalogs\\$catalogId"
-$taskName = "ExcelLocalLLM Watcher"
+$taskName = "ExcelLocalLLM Startup"
 $installRoot = Join-Path $env:LOCALAPPDATA "ExcelLocalLLM"
 
 schtasks /Delete /TN "$taskName" /F | Out-Null

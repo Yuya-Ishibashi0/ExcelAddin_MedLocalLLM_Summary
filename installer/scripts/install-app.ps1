@@ -9,8 +9,8 @@ $manifestDest = Join-Path $manifestDir "ExcelLocalLLM.xml"
 $shareName = "OfficeAddinManifests"
 $catalogId = "{B5E7B94E-51B3-4F97-A2E8-2DF8D3B3D9F3}"
 $catalogKey = "HKCU:\\Software\\Microsoft\\Office\\16.0\\WEF\\TrustedCatalogs\\$catalogId"
-$taskName = "ExcelLocalLLM Watcher"
-$watchScript = Join-Path $repoRoot "scripts\\excel-watch.ps1"
+$taskName = "ExcelLocalLLM Startup"
+$startScript = Join-Path $repoRoot "scripts\\start.ps1"
 
 function Get-WindowsAppsDir {
     if (-not $env:LOCALAPPDATA) {
@@ -118,8 +118,18 @@ New-ItemProperty -Path $catalogKey -Name "Id" -Value $catalogId -PropertyType St
 New-ItemProperty -Path $catalogKey -Name "Url" -Value "\\\\localhost\\OfficeAddinManifests" -PropertyType String -Force | Out-Null
 New-ItemProperty -Path $catalogKey -Name "Flags" -Value 1 -PropertyType DWord -Force | Out-Null
 
-$taskAction = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$watchScript`""
+$taskAction = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$startScript`""
 schtasks /Create /F /SC ONLOGON /RL HIGHEST /TN "$taskName" /TR "$taskAction" /RU "$env:USERNAME" | Out-Null
+try {
+    $settings = New-ScheduledTaskSettingsSet `
+        -ExecutionTimeLimit (New-TimeSpan -Seconds 0) `
+        -AllowStartIfOnBatteries:$true `
+        -DontStopIfGoingOnBatteries:$true `
+        -StartWhenAvailable:$true
+    Set-ScheduledTask -TaskName $taskName -Settings $settings | Out-Null
+} catch {
+    # Best-effort: keep install working even if TaskScheduler cmdlets aren't available.
+}
 
 $pythonExe = Find-PythonExe
 if ($pythonExe) {
